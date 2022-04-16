@@ -34,7 +34,12 @@ class TokenAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('No API token provided');
         }
 
-        return new SelfValidatingPassport(new UserBadge($apiToken));
+        return new Passport(
+            new UserBadge($email, function ($userIdentifier) {
+                return $this->userRepository->findOneBy(['email' => $userIdentifier]);
+            }),
+            $credentials
+        );
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response

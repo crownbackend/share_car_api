@@ -22,7 +22,13 @@ class TokenAuthenticator extends AbstractAuthenticator
      */
     public function supports(Request $request): ?bool
     {
-        return $request->headers->has('X-AUTH-TOKEN');
+        $routeAllowed = ['profile_profile'];
+        $route = $request->attributes->get('_route');
+        if(!in_array($route, $routeAllowed)) {
+            return $request->headers->has('X-AUTH-TOKEN');
+        } else {
+            return true;
+        }
     }
 
     public function authenticate(Request $request): Passport
@@ -34,12 +40,7 @@ class TokenAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('No API token provided');
         }
 
-        return new Passport(
-            new UserBadge($email, function ($userIdentifier) {
-                return $this->userRepository->findOneBy(['email' => $userIdentifier]);
-            }),
-            $credentials
-        );
+        return new SelfValidatingPassport(new UserBadge($apiToken));
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
